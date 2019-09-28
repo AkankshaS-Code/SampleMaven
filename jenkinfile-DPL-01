@@ -1,0 +1,45 @@
+pipeline {
+    agent { label 'Java' }
+    stages { 
+        stage ("SCM Checkin-1") {
+            steps {
+                git branch: 'master', url: 'https://github.com/Vishwanathms/SampleMaven'
+            }
+        }
+        stage ("Mvn Build") {
+            tools {
+                maven 'maven-3.6.2'
+                jdk "JDK1.8"
+            }
+            steps {
+                sh "mvn package"
+            }
+        }
+        stage ("Build the Image") {
+            steps {
+                sh "docker build . -t vishwacloudlab/tomcat-custom01"
+            }
+        }
+        stage ("Run the Container") {
+            steps {
+                sh "docker run -d -p 90:8080 --name cont01 vishwacloudlab/tomcat-custom01"
+            }
+        }
+        stage ("Check the webpage") {
+            steps {
+                sh "sleep 15"
+                sh "curl http://192.168.213.102:90"
+            }
+        }
+        stage ("Commit the container") {
+            steps {
+                sh "docker commit cont01 vishwacloudlab/tomcat-custom02:latest"
+            }
+        }
+        stage ("Push to Docker HUB") {
+            steps {
+                sh "docker push vishwacloudlab/tomcat-custom02:latest"
+            }
+        }
+    }
+}
